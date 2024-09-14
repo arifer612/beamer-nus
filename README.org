@@ -2,3 +2,81 @@
 #+author: Arif Er
 
 This is the custom LaTeX style file for the NUS Beamer theme.
+
+* Installation
+
+** Manual
+
+We will largely follow the instructions on [[https://www.maths.cam.ac.uk/computing/software/tex/package][this site]] to install the theme manually
+#+begin_src shell
+  mkdir -p ${HOME}/texmf/dist ${HOME}/texmf/tex/latex
+  cd ${HOME}/texmf/dist
+  wget https://github.com/arifer612/beamer-nus/archive/refs/heads/master.zip -O beamer-nus.zip
+  cd ${HOME}/texmf/tex/latex
+  unzip ${HOME}/texmf/dist/beamer-nus.zip
+  mv beamer-nus-master beamer-nus
+#+end_src
+
+** Via home-manager
+
+Alternatively, on a user system managed by [[https://github.com/nix-community/home-manager][home-manager]], the theme can be added
+as an extra package using the ~texlive~ home-manager module
+#+begin_src nix
+{ config, pkgs ? import <nixpkgs> {} , lib, ... }:
+let
+  latex-beamer-nus = pkgs.stdenvNoCC.mkDerivation rec {
+    pname = "latex-beamer-nus";
+    version = "XXXXXX";  # a sensible version for the nix package
+
+    rev = "XXXXXX";  # a specific commit revision hash
+    hash = "sha256-XXXXXX";  # the appropriate sha256 hash for rev
+
+    outputs = [ "tex" ];
+
+    passthru.tlType = "run";
+
+    src = pkgs.fetchFromGitHub {
+      inherit rev hash;
+      owner = "arifer612";
+      repo = "beamer-nus";
+    };
+
+    dontBuild = true;
+    nativeBuildInputs = [
+      (pkgs.writeShellScript "force-tex-output.sh" ''
+          out="''${tex-}"
+        '')
+    ];
+
+    dontConfigure = true;
+
+    installPhase = ''
+      runHook preInstall
+
+      path="$tex/tex/latex/beamer-nus"
+      mkdir -p "$path"
+      cp $src/*.sty "$path"
+      cp -R $src/images "$path"
+
+      runHook postInstall
+    '';
+
+    meta = with lib; {
+      description = "Custom Beamer theme for NUS";
+      license = licenses.gpl3Only;
+    };
+  };
+in
+{
+  programs.texlive = {
+    enable = true;
+    extraPackages = tpkgs: {
+      inherit (tpkgs)
+        scheme-XXX;  # your texlive scheme preference
+      latexStyles = {
+        pkgs = [ latex-beamer-nus ];
+      };
+    };
+  };
+}
+#+end_src
