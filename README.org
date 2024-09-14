@@ -1,0 +1,4 @@
+#+title: NUS Beamer Theme
+#+author: Arif Er
+
+This is the custom LaTeX style file for the NUS Beamer theme.
